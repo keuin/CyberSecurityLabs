@@ -80,7 +80,7 @@ FAILED:
     }
 
     // listen to [host]:[port]
-    if (listen(s, 0))
+    if (listen(s, SERVER_LISTEN_BACKLOG))
     {
         int errsv = errno;
         fprintf(stderr, "Failed to listen to socket %s:%d [error %d]: %s\n",

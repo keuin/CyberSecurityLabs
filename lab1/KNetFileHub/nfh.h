@@ -14,9 +14,9 @@
 
 /* configurations */
 #define SERVER_DEDFAULT_PORT 3789
-#define SEND_BUFFER_SIZE 4194304U /* 4KB */
+#define SEND_BUFFER_SIZE 4194304U /* 4KB */ /* match the system's page size */
 #define RECV_BUFFER_SIZE 4194304U /* 4KB */
-#define SERVER_LISTEN_BACKLOG 3
+#define SERVER_LISTEN_BACKLOG 0 /* disable client queue */
 
 /* protocol specific constants */
 #define MAX_FILENAME_LENGTH 255
@@ -44,16 +44,16 @@
 #define CLIENT_ERR_SEND_SIZE_MISMATCH -6
 
 /* FSM consts */
-// #define FSM_ERR   9 /* [AC] error */
-#define FSM_INIT 0                                                         /* connection initialization */
-#define FSM_HS 1                                                           /* Handshake */
-#define FSM_MS 2                                                           /* ModeSwitch */
-#define FSM_DE 3 /* DataExchange, vfunc will be dynamically bound in MS */ /* only available when mode is UPLOAD */
-#define FSM_SO 4                                                           /* ServerOffer, only available in DOWNLOAD mode */
-#define FSM_CT 5                                                           /* WTF? */
-#define FSM_Q 6                                                            /* Quit */
-#define FSM_DIE 10                                                         /* clean up, recover from a broken connection or invalid peer */
-#define FSM_STOP 11                                                        /* no vfunc, when reached, stop the main loop. Only joined from DIE */
+// #define FSM_ERR   9  /* [AC] error */
+#define FSM_INIT 0   /* connection initialization */
+#define FSM_HS 1     /* Handshake */
+#define FSM_MS 2     /* ModeSwitch */
+#define FSM_DE 3     /* DataExchange, vfunc will be dynamically bound in MS. Only available when mode is UPLOAD */
+#define FSM_SO 4     /* ServerOffer, only available in DOWNLOAD mode */
+#define FSM_CT 5     /* WTF? */
+#define FSM_Q 6      /* Quit */
+#define FSM_DIE 10   /* clean up, recover from a broken connection or invalid peer */
+#define FSM_STOP 11  /* no vfunc, when reached, stop the main loop. Only joined from DIE */
 
 /* DataExchange modes */
 #define DE_MODE_UPLOAD 1

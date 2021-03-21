@@ -377,7 +377,7 @@ C_DE_D_FAIL_FREE:
 
     // send file id
     int write_sz;
-    if ((write_sz = write(s, &file_id, 8)) != 8)
+    if ((write_sz = write(s, &file_id, sizeof(uint64_t))) != sizeof(uint64_t))
     {
         if (write_sz < 0)
         {
