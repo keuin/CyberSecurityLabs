@@ -307,7 +307,7 @@ SERVER_DE_FAIL:
     // check string EOF
     if (!is_string_buf_valid(preamble.name, MAX_FILENAME_LENGTH))
     {
-        fprintf(stderr, "Invalid file name in preamble: No valid EOF.\n");
+        fprintf(stderr, "Invalid file name in preamble: String is not ended with EOF.\n");
         goto SERVER_DE_FAIL;
     }
     if (!is_valid_file_name(preamble.name))

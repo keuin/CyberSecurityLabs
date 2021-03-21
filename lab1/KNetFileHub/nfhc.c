@@ -329,6 +329,13 @@ C_DE_D_FAIL_FREE:
     for(uint64_t i = 0; i < file_count; ++i)
     {
         struct so_s2c_file_entry *pent = &file_list[i];
+        // validate string
+        if (!is_string_buf_valid(pent->name, MAX_FILENAME_LENGTH))
+        {
+            fprintf(stderr, "Corrupt entry #%" PRIu64
+                ": File name string is not ended with EOF.\n", i);
+            goto C_DE_D_FAIL_FREE;
+        }
         char *ts = ctime((time_t*)&file_list[i].ts_modified);
         printf("%4" PRIu64 "\t%12s\t%12" PRIu64 "\t%24s", i, pent->name, pent->size, ts);
     }
