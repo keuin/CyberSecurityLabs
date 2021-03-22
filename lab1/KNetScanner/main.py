@@ -7,7 +7,7 @@ from typing import Iterator
 import wx
 import re
 from main_frame import *
-from connection_scanner import ScanTarget, ConcurrentConnectionScanner
+from connect_scanner import ScanTarget, ConcurrentConnectionScanner
 from util import get_time_string
 
 LOG_FORMAT = '[%(levelname)s][%(asctime)-15s][%(filename)s][%(lineno)d] %(message)s'
@@ -50,6 +50,8 @@ class ConcreteMainFrame(MainFrame):
 
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
+        self.SetMinSize((700, 260))
+        self.SetSize((760, 430))
         self.__logger = logging.getLogger(ConcreteMainFrame.__name__)
         self.__scanner_thread = None
 
