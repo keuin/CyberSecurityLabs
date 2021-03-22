@@ -55,7 +55,11 @@ class ConcreteMainFrame(MainFrame):
 
     def button_remove_target_click(self, event):
         list_items = self.check_list_box_targets.GetItems()
-        for target_id in self.check_list_box_targets.GetSelections():
+        selected_items = self.check_list_box_targets.GetSelections()
+        if not selected_items:
+            wx.MessageBox('Please select targets to be deleted.')
+            return
+        for target_id in selected_items:
             target_name = list_items[target_id]
             print(f'Item {target_name}')
             self.check_list_box_targets.Delete(target_id)
@@ -66,6 +70,22 @@ class ConcreteMainFrame(MainFrame):
         scan_name = str(self.text_name.Value).strip()
         scan_host = str(self.text_host.Value).strip()
         scan_port = str(self.text_port.Value).strip()
+
+        if re.fullmatch(r'[0-9]*', scan_host):
+            wx.MessageBox(f'Numeric host "{scan_host}" is not allowed.', 'Invalid host')
+            return
+
+        pattern_inet4_addr = r'^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$'
+        if re.fullmatch(r'[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*', scan_host) \
+            and not re.fullmatch(pattern_inet4_addr, scan_host):
+            wx.MessageBox(f'Invalid INET4 address "{scan_host}".\n'
+                          f'Mismatched with r"{pattern_inet4_addr}".')
+            return
+
+
+        if not scan_name:
+            wx.MessageBox('Target name cannot be empty.')
+            return
 
         ### validate host
         valid_host = True
@@ -112,9 +132,24 @@ class ConcreteMainFrame(MainFrame):
 
     def button_save_logs_click(self, event):
         self.__logger.info('Save logs')
-        wx.MessageBox('Not implemented! (理直气壮')
+        with wx.FileDialog(self, 'Save log to file', wildcard='Text files (*.txt)|*.txt',
+                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as file_dialog:
+            if file_dialog.ShowModal() == wx.ID_CANCEL:
+                return  # user cancelled
+            file_path = file_dialog.GetPath()
+            try:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(self.text_output.Value)
+            except IOError as e:
+                wx.MessageBox(f'Unexpected exception occurred while saving logs to file: {e}',
+                              'Failed to save')
+                return
+        wx.MessageBox(f'Logs saved as file {file_path}')
 
     def button_start_scan_click(self, event):
+        if self.__scanner_thread and self.__scanner_thread.is_alive():
+            wx.MessageBox('Scanning is already started.')
+            return
         ## Validate targets
         if not targets:
             wx.MessageBox('No scan target specified. Please add at least one scan target.\n '
