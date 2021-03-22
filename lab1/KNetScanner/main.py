@@ -56,15 +56,19 @@ class ConcreteMainFrame(MainFrame):
     def button_remove_target_click(self, event):
         list_items = self.check_list_box_targets.GetItems()
         selected_items = self.check_list_box_targets.GetSelections()
-        if not selected_items:
+
+        has_selected = False
+        for target_id in selected_items:
+            if self.check_list_box_targets.IsChecked(target_id):
+                has_selected = True
+                target_name = list_items[target_id]
+                self.check_list_box_targets.Delete(target_id)
+                targets.pop(target_name)
+                self.__logger.info(f'Removed target {target_name}')
+
+        if not has_selected:
             wx.MessageBox('Please select targets to be deleted.')
             return
-        for target_id in selected_items:
-            target_name = list_items[target_id]
-            print(f'Item {target_name}')
-            self.check_list_box_targets.Delete(target_id)
-            targets.pop(target_name)
-            self.__logger.info(f'Removed target {target_name}')
 
     def button_add_target_click(self, event):
         scan_name = str(self.text_name.Value).strip()
