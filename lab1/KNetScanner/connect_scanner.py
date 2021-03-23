@@ -81,7 +81,7 @@ class ConcurrentConnectionScanner:
         else:
             raise TypeError('Bad scan_target')
 
-    def scan(self, callback, timeout_seconds=2, max_workers=16) -> (int, int):
+    def scan(self, callback, timeout_seconds=2, max_workers=16, finished_counter_provider=None) -> (int, int):
         """
         Start a blocking multi-threaded scan.
         :param callback: receives a `host`, a `port` and a `name`
@@ -92,16 +92,18 @@ class ConcurrentConnectionScanner:
         if not isinstance(timeout_seconds, int) and not isinstance(timeout_seconds, float):
             raise TypeError('Bad timeout_seconds')
 
-        def __scan(host: str, port: int, name: str, que: Queue, open_counter: FastWriteCounter):
+        def __scan(host: str, port: int, name: str, que: Queue, open_counter: FastWriteCounter,
+                   finished_counter: FastWriteCounter):
             try:
                 r = socket.create_connection((host, port), timeout=timeout_seconds)
             except Exception as e:
-                del r
                 self.__logger.debug(f'Target {host}:{port} timed out: {e}')
+                finished_counter.increment()
                 return False
             del r
             self.__logger.debug(f'Target {host}:{port} is open.')
             que.put((host, port, name))
+            finished_counter.increment()
             open_counter.increment()
             return True
 
@@ -116,8 +118,11 @@ class ConcurrentConnectionScanner:
 
         self.__logger.info('Start scanning...')
         q = Queue(maxsize=8192)
-        counter_scanned = 0
+        counter_submitted = 0
+        counter_finished = FastWriteCounter()
         counter_open = FastWriteCounter()
+        if finished_counter_provider:
+            finished_counter_provider(counter_finished)
         try:
             Thread(target=__callback, kwargs={'cb': callback, 'que': q}).start()
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -127,13 +132,14 @@ class ConcurrentConnectionScanner:
                     for host, port in target.iterate():
                         assert isinstance(host, str), f'bad host {host}'
                         assert isinstance(port, int), f'bad port {port}'
-                        executor.submit(__scan, host=host, port=port, name=target.name, que=q, open_counter=counter_open)
-                        counter_scanned += 1
+                        executor.submit(__scan, host=host, port=port, name=target.name, que=q,
+                                        open_counter=counter_open, finished_counter=counter_finished)
+                        counter_submitted += 1
                 executor.shutdown(wait=True, cancel_futures=False)
         except Exception as e:
             print(f'Unexpected exception: {e}')
         q.put((None, None, None))
-        return counter_scanned, counter_open.value()
+        return counter_submitted, counter_open.value()
 
 
 def simple_callback(host: str, port: int, name: str):
