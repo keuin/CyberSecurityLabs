@@ -1,0 +1,5 @@
+编译环境： GCC 10.2.0, Linux 5.9 (x64)
+1. 安装make, gcc。
+2. 解压缩后，在项目根目录下运行`make client server`。
+3. 运行`./client`打开客户端，运行`./server`打开服务端（默认端口号TCP 3789）。
+

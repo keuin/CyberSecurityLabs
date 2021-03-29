@@ -1,0 +1,4 @@
+1. 安装Python 3.9.2及对应的pip包管理器。
+2. 解压缩项目，在项目目录下运行`pip install -r requirements.txt`安装所需的依赖。
+3. 在项目目录下运行`python ./main.py`打开扫描器。
+
