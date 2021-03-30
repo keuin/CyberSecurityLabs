@@ -3,5 +3,13 @@
 venv/
 __pycache__/
 
+pics/
+
+# lab1 binary
 server
 client
+
+# lab2 binary
+spcap
+spcap_debug
+util_debug
