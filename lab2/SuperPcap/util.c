@@ -57,3 +57,88 @@ inline void __debug(const char *s, const char *f, const char* func, const int l)
 {
     printf("[DEBUG] (%s:%d:%s) %s\n", f, l, func, s);
 }
+
+/**
+ * @brief Replace non-visible character with '.'
+ * 
+ * @param s string
+ * @param n size
+ */
+static void safe_print(FILE* const fp, const char *s, size_t n)
+{
+    #define ORELSE(c) ((c < 32U || c > 127U)?('.'):((char)c))
+    for (size_t i=0; i!=n; ++i)
+    {
+        fputc(ORELSE(s[i]), fp);
+    }
+    #undef ORELSE
+}
+
+/**
+ * @brief Write n bytes from buffer to file. Data will be printed in hex and ascii representation.
+ * 
+ * @param fp file
+ * @param buffer buffer
+ * @param n length
+ */
+void binary_write(FILE* const fp, void* const buffer, size_t n)
+{
+    #define block_size 4
+    #define line_size 16
+    #define MAX(a,b) ((a>b)?(a):(b))
+    #define GET_PRINT_LENGTH(cnt) ((cnt) / block_size * 1 + (cnt) * 3)
+    char str[GET_PRINT_LENGTH(line_size) + 1] = {'\0'};
+    unsigned char *b = buffer;
+    for(; n>=line_size; n-=line_size)
+    {
+        fprintf(fp, "%02X %02X %02X %02X  %02X %02X %02X %02X  %02X %02X %02X %02X  %02X %02X %02X %02X  |  ",
+            b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7],
+            b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15]);
+        safe_print(fp, (char*)b, line_size);
+        fputc('\n', fp);
+        b += line_size;
+    }
+    if (n)
+    {
+        const unsigned char *line_header = b;
+        const size_t block_count = n / block_size;
+        memcpy(str, b, n);
+        str[n] = '\0';
+        for (int i=0; i != block_count; ++i)
+        {
+            fprintf(fp, "%02X %02X %02X %02X  ", b[0], b[1], b[2], b[3]);
+            b += block_size;
+        }
+        
+        for (int i=0; i!=n % 4; ++i)
+        {
+            fprintf(fp, "%02X ", *b++);
+        }
+        // padding, 3 spaces per byte
+        
+        const size_t k = GET_PRINT_LENGTH(line_size) - GET_PRINT_LENGTH(n);
+        memset(str, ' ', k);
+        str[k] = '\0';
+        fprintf(fp, str);
+
+        fprintf(fp, "|  ");
+        safe_print(fp, (char*)line_header, n);
+        fputc('\n', fp);
+    }
+    #undef line_size
+    #undef block_size
+    #undef GET_PRINT_LENGTH
+    #undef MAX
+}
+
+// char test[256];
+// int main()
+// {
+//     // TEST binary_write
+//     for (int i=0; i!=256; ++i)
+//     {
+//         test[i] = (char)i;
+//     }
+//     binary_write(stdout, test, 256);
+//     return 0;
+// }

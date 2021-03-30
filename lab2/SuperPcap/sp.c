@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <time.h>
 #include <pcap/pcap.h>
 #include <sys/types.h>
 
@@ -22,6 +23,8 @@ static void captured_packet_handler(u_char *user_parameter, const struct pcap_pk
 
 char errbuf[PCAP_ERRBUF_SIZE] = {'\0'};
 pcap_t *inst = NULL;
+int link_layer_type;
+FILE *of = NULL;
 
 static void signal_handler(int s)
 {
@@ -31,13 +34,16 @@ static void signal_handler(int s)
         pcap_breakloop(inst);
         pcap_close(inst);
         puts("SuperPcap is stopped.");
+        fflush(of);
         exit(0);
     }
 }
 
 int main(void)
 {
+    of = stdout;
     signal(SIGINT, signal_handler);
+    setbuf(stdout, NULL);
     puts("SuperPcap: A packet capturing tool based on libpcap.");
     printf("pcap version: %s\n\n", pcap_lib_version());
 
@@ -107,24 +113,63 @@ int main(void)
     // TODO: set filter condition to `inst` here
     // currently we do not implement that
 
-    // activiate
+    // set timeout
+    pcap_set_timeout(inst, 200);
+    pcap_set_buffer_size(inst, 4096);
+
+    // activate
     int pcap_errno;
     if ((pcap_errno = pcap_activate(inst)))
     {
-        eprintf("Cannot activiate interface %s", iface->name);
+        eprintf("Cannot activate interface %s", iface->name);
+FAIL_BEFORE_ACTIVATE:
         pcap_perror(inst, "");
         pcap_freealldevs(devlist);
         pcap_close(inst);
         return ERR_PCAP_CANNOT_ACTIVIATE_IFACE;
     }
 
+    // set link-layer type
+    link_layer_type = pcap_datalink(inst);
+
+    if (link_layer_type != DLT_EN10MB)
+    {
+        eprintf("Unsupported link-layer protocol: %d.\n", link_layer_type);
+        goto FAIL_BEFORE_ACTIVATE;
+    }
+
+    // ask file name or just print to stdout
+    char c = 0;
+    do
+    {
+        if (c != '\n' && c != '\r')
+            printf("Where would you like to print capture logs? (f:File, s:STDOUT) ");
+    } while (scanf("%c", &c) != 1 || (c != 'f' && c != 'F' && c != 's' && c != 'S'));
+    if (c == 'f' || c == 'F')
+    {
+        // ask for file name
+        char file_name[64];
+        do
+        {
+            if (!of)
+                perror("Cannot open file");
+            printf("Save to:");
+        } while(scanf("%63s", file_name) != 1 || !(of = fopen(file_name, "w")));
+        printf("Scan result will be saved in file `%s`.\n", file_name);
+    }
+    else
+    {
+        printf("Scan result will be printed to STDOUT.\n");
+        of = stdout;
+    }
+
     // here we capture packets
     pcap_loop(inst, -1, captured_packet_handler, NULL);
 
-    ASSERT(0); // should never go here
     // finish capturing
     pcap_close(inst);
     puts("SuperPcap is stopped.");
+    fflush(of);
     return 0;
 }
 
@@ -132,5 +177,34 @@ static void captured_packet_handler(u_char *__, const struct pcap_pkthdr *packet
 {
     // handle all captured packets
     // printf("Packet %" PRIu32 " bytes.\n", packet_header->len);
-    
+
+    // print capture time
+    fprintf(of, "======== FRAME START ========\n");
+    fprintf(of, "[Frame] time=%ld.%06ld", packet_header->ts.tv_sec, packet_header->ts.tv_usec);
+
+    char tmbuf[64];
+    strftime(tmbuf, sizeof(tmbuf), "%Y-%m-%d %H:%M:%S", localtime(&packet_header->ts.tv_sec));
+    fprintf(of, " [%s.%06ld], ", tmbuf, packet_header->ts.tv_usec);
+
+    // print packet size
+    if (packet_header->len != packet_header->caplen)
+    {
+        fprintf(of, "%" PRIu32 " bytes captured (%" PRIu32 " bytes in total) ",
+            packet_header->caplen, packet_header->len);
+    }
+    else
+    {
+        fprintf(of, "%" PRIu32 " bytes ", packet_header->len);
+    }
+
+    // print packet data
+    fprintf(of, "\n\n");
+    // fprintf(of, "Decoded information:\n");
+    print_decoded_packet(of, (const u_int8_t*)packet, packet_header->caplen);
+
+    fprintf(of, "\n");
+    fprintf(of, "Link-layer frame data:\n");
+    binary_write(of, (void *const)packet, packet_header->caplen);
+    fputs("========  FRAME END  ========\n\n", of);
+
 }

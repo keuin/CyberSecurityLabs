@@ -24,5 +24,6 @@
 void __debug(const char *s, const char *f, const char* func, const int l);
 void __assertion(int s, char *f, int l, char *m);
 char *get_ip_str(struct sockaddr *sa);
+void binary_write(FILE* const fp, void* const buffer, size_t n);
 
 #endif
