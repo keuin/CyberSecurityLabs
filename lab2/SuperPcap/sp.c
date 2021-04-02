@@ -206,5 +206,4 @@ static void captured_packet_handler(u_char *__, const struct pcap_pkthdr *packet
     fprintf(of, "Link-layer frame data:\n");
     binary_write(of, (void *const)packet, packet_header->caplen);
     fputs("========  FRAME END  ========\n\n", of);
-
 }

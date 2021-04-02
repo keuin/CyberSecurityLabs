@@ -28,7 +28,7 @@ static inline char *get_net_layer_type(int ether_type)
 void print_decoded_packet(FILE *fp, const uint8_t *p, size_t size)
 {
     // Ethernet frame header
-    fprintf(fp, "+ Layer-2 (Ethernet):\n");
+    fprintf(fp, "+ Layer 2 (Ethernet):\n");
     fprintf(fp, "Src: %02X:%02X:%02X:%02X:%02X:%02X\n", p[0], p[1], p[2], p[3], p[4], p[5]);
     fprintf(fp, "Dst: %02X:%02X:%02X:%02X:%02X:%02X\n", p[6], p[7], p[8], p[9], p[10], p[11]);
     const uint16_t layer3_type = ETHERNET(p)->ether_type;
