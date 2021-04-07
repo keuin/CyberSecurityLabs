@@ -25,7 +25,7 @@ def make_ip_segment(src: str, dst: str, layer4_data: bytes) -> bytes:
 
 def tcp_syn(dst_port: int) -> bytes:
     # tcp header fields
-    sport = 1234  # source port
+    sport = int.from_bytes(os.urandom(2), byteorder='little')  # source port
     dport = dst_port  # destination port
     seq = 0
     ack_seq = 0
