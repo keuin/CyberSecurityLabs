@@ -13,7 +13,10 @@ def make_ip_segment(src: str, dst: str, layer4_data: bytes) -> bytes:
     ttl = 255
     protocol = socket.IPPROTO_TCP
     check = 0  # let the socket calculate
-    saddr = socket.inet_aton(src)
+    if src:
+        saddr = socket.inet_aton(src)
+    else:
+        saddr = os.urandom(4)
     daddr = socket.inet_aton(dst)
 
     ihl_version = (version << 4) + ihl
@@ -25,7 +28,7 @@ def make_ip_segment(src: str, dst: str, layer4_data: bytes) -> bytes:
 
 def tcp_syn(dst_port: int) -> bytes:
     # tcp header fields
-    sport = int.from_bytes(os.urandom(2), byteorder='little')  # source port
+    sport = int.from_bytes(os.urandom(2), byteorder='little', signed=False)  # source port
     dport = dst_port  # destination port
     seq = 0
     ack_seq = 0

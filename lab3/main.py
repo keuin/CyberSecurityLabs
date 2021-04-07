@@ -9,7 +9,7 @@ import time
 
 import synutil
 
-source_ip = input('Source IP:')
+source_ip = input('Source IP (leave blank if you want to randomize):')
 destination_ip = input('Dest. IP:')
 destination_port = int(input('Dest. port:'))
 
