@@ -1,6 +1,13 @@
-import synutil
+# ---------------------
+# SYN Flood 攻击演示程序
+# 需要有root权限或设置了
+# CAP_NET_RAW权限位
+# ---------------------
+
 import socket
 import time
+
+import synutil
 
 source_ip = input('Source IP:')
 destination_ip = input('Dest. IP:')
