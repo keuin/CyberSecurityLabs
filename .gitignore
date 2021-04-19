@@ -13,3 +13,7 @@ client
 spcap
 spcap_debug
 util_debug
+
+# wx
+*.wxg
+*.wxg*
