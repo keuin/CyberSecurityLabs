@@ -13,6 +13,7 @@ logging.basicConfig(format=LOG_FORMAT, level='ERROR')
 __url_matcher = re.compile(r'((?:https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|])')
 
 
+
 def is_url_safe(url):
     for j in ['.zip', '.rar', '.7z', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg',
               '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx']:
@@ -26,6 +27,8 @@ def search_webpage(start_url: str, max_depth: int = 3, ua: str = None, __ses: Se
     try:
         if not __ses:
             __ses = requests.Session()
+            # if proxies:
+            #     __ses.proxies.update(proxies)
             if ua:
                 __ses.headers['User-Agent'] = ua
         if not __searched_pages:
@@ -48,7 +51,7 @@ def search_webpage(start_url: str, max_depth: int = 3, ua: str = None, __ses: Se
                                           __searched_pages=__searched_pages)
     except IOError as e:
         logging.warning(f'IOError while reading `{start_url}`: {e}')
-    except Exception:
+    except RuntimeError:
         pass
     if __depth == 0 and __ses:
         __ses.close()
@@ -64,7 +67,7 @@ if __name__ == '__main__':
     with open('result.txt', 'w', encoding='utf-8') as f:
         for url, webpage in search_webpage(start_url, ua=user_agent, max_depth=max_depth):
             for kw in keywords.keys():
-                if cnt := len(re.findall(kw, webpage)):
+                if cnt := len(tuple(re.finditer(kw, webpage))):
                     keywords[kw] += cnt
                     msg = f'Webpage `{url}` contains keyword `{kw}` {cnt} {"time" if cnt < 2 else "times"}.'
                     print(msg)
