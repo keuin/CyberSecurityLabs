@@ -32,6 +32,8 @@ class MyFrame(MainFrame):
                                               k=scheme.sha512(username+password).encode('utf-8'),
                                               iv=data[:16]).decode('utf-8')
                     wx.MessageBox(f'Server response: {msg}\nData: {response}')
+                    with open('out.txt', 'w', encoding='utf-8') as f:
+                        f.write(response)
                 else:
                     wx.MessageBox(f'Server response: {msg}' )
             else:
